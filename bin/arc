@@ -1,0 +1,9 @@
+#!/bin/bash
+
+export ARC_DIR="$(cd $(dirname $(readlink -f $0))/.. && pwd)/lib/arc"
+
+if [ $# -eq 0 -a `type -p rlwrap` ]; then
+  rl='rlwrap -C arc'
+fi
+
+$rl mzscheme -q -f "$ARC_DIR/as.scm" $@
