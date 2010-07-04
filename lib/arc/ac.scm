@@ -1488,5 +1488,8 @@
                                      (cons (car cs) (unesc (cdr cs))))))))
                   (unesc (string->list s)))))
   
+; FIXME
+(xdef env getenv)
+
 )
 

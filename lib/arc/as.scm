@@ -9,8 +9,9 @@
 (require "brackets.scm")
 (use-bracket-readtable)
 
-(aload "arc.arc")
-(aload "libs.arc")
+(let ((d (getenv "ARC_DIR")))
+  (for-each (lambda (f) (aload (path->string (build-path d f))))
+            '("arc.arc" "libs.arc")))
 
 (let ((args (vector->list (current-command-line-arguments))))
   (if (null? args)

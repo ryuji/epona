@@ -1442,8 +1442,17 @@
        (pr ,@(parse-format str))))
 )
 
+(= libpaths* `("." ,(env "ARC_DIR")))
+
+(def find-lib (file)
+  (aif (is file.0 #\/)
+       file
+       (find [file-exists (+ _ "/" file)] libpaths*)
+       (+ it "/" file)
+       (err "Not found" file)))
+
 (def load (file)
-  (w/infile f file
+  (w/infile f (find-lib file)
     (w/uniq eof
       (whiler e (read f eof) eof
         (eval e)))))
