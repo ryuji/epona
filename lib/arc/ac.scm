@@ -1135,6 +1135,22 @@
                 (rename-file-or-directory old new #t)
                 'nil))
 
+(xdef cpfile (lambda (src dst)
+                (copy-file src dst)
+                'nil))
+
+(xdef mtime (lambda (name)
+                (file-or-directory-modify-seconds name)))
+
+(xdef file-perms (lambda (name)
+                    (file-or-directory-permissions name)))
+
+(xdef file-size (lambda (name)
+                    (file-size name)))
+
+(xdef file-join (lambda parts
+                    (path->string (apply build-path parts))))
+
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
