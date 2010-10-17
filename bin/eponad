@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-export EPONA_DIR="$(cd $(dirname $(readlink -f $0))/.. && pwd)/lib/epona"
+export SYS_DIR="$(cd $(dirname $(readlink -f $0))/.. && pwd)"
 
 if [ $# -eq 0 ]; then
   export APP_DIR="`pwd`"
@@ -8,4 +8,4 @@ else
   export APP_DIR="$(cd $1 && pwd)"
 fi
 
-arc "$EPONA_DIR/rc.arc"
+exec arc --no-rl "$SYS_DIR/lib/epona/rc.arc"

@@ -1,7 +1,10 @@
-(= epona-dir*  (env "EPONA_DIR")
-   app-dir*    (env "APP_DIR"))
+(= sysdir* (env "SYS_DIR")
+   appdir* (env "APP_DIR"))
 
-(push epona-dir* libpaths*)
-(push app-dir* libpaths*)
-
+(push (+ sysdir* "/lib/epona") libpaths*)
 (load "epona.arc")
+
+(push appdir* libpaths*)
+(load "app.arc")
+
+(serve)
