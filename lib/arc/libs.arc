@@ -1,7 +1,10 @@
 (map load '("strings.arc"
             "pprint.arc"
-            "code.arc"
-            "html.arc"
-            "srv.arc"
-            "app.arc"
-            "prompt.arc"))
+            "lib/extend.arc"
+            "lib/scheme.arc"
+;            "code.arc"
+;            "html.arc"
+;            "srv.arc"
+;            "app.arc"
+;            "prompt.arc"
+            ))
