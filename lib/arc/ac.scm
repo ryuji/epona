@@ -1529,8 +1529,10 @@
                                      (cons (car cs) (unesc (cdr cs))))))))
                   (unesc (string->list s)))))
   
-; FIXME
-(xdef env getenv)
+(xdef env (lambda (key . val)
+            (ar-nill (if (null? val)
+                         (getenv key)
+                         (putenv key (car val))))))
 
 )
 
