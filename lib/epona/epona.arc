@@ -29,7 +29,8 @@
 (def load-mimetypes (path)
   (let tb (load-table path)
     (def mimetypes (f)
-      (or (tb (sym:downcase (last (check (tokens f #\.) ~single))))
+      (or (tb (sym:downcase:last:tokens string.f #\.))
+      ;(or (tb (sym:downcase (last (check (tokens f #\.) ~single))))
           (tb 'txt)))))
 
 (def load-conf (path)
@@ -86,29 +87,29 @@
   (awhen string.file
     (file-exists (+ conf*!pubdir "/" it))))
 
-;(def prhds (hds)
-;  (each (n v) hds (prrn n ": " v))
-;  (prrn))
+(deftem response
+  hds  (obj Server       (+ "epona/" epona-ver*)
+            Content-Type mimetypes!html
+            Connection   "close")
+  code 200)
 
-(def header (code . fields)
-  (apply pr "HTTP/1.0 " code " " (status-codes* code) "\r\n"
-            "Server: epona/" epona-ver* "\r\n"
-            "Connection: close\r\n"
-            fields))
-
-(def respond-header ((o type mimetypes!html) (o code 200))
-  (header code "Content-Type: " type "\r\n")
+(def respond-header (res)
+  (prrn "HTTP/1.0 " res!code " " (status-codes* res!code))
+  (each (k v) res!hds (prrn k ": " v))
   (prrn))
 
 (def respond-file (o req)
   (awhen (file-exists-in-pubdir req!op)
-    (w/stdout o
-      (respond-header mimetypes.it)
-      (unless (is req!meth 'head)
-        (w/infile i it
-          (whilet b (readb i)
-            (writeb b o)))))
-    t))
+    (let res (inst 'response)
+      (= res!hds!Content-Type   mimetypes.it
+         res!hds!Content-Length file-size.it)
+      (w/stdout o
+        (respond-header res)
+        (unless (is req!meth 'head)
+          (w/infile i it
+            (whilet b (readb i)
+              (writeb b o)))))
+      res)))
 
 ; FIXME: this is dummy code!
 (def dispatch (req)
