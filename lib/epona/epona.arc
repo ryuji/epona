@@ -20,6 +20,12 @@
       hd   (req key) (alref req!hds   key)
       cook (req key) (alref req!cooks key))
 
+(deftem response
+  hds  (obj Server       (+ "epona/" epona-ver*)
+            Content-Type mimetypes!html
+            Connection   "close")
+  code 200)
+
 (= status-codes* (listtab '(
   (200 "OK")
   (302 "Moved Temporarily")
@@ -77,21 +83,14 @@
 
 (def handle-request-thread (i o ip)
   (let req (readreq i ip)
-   (or (respond-file o req)
-        (let res (dispatch req)
-          (w/stdout o
-            (respond-header o)
-            (prrn res!bdy))))))
+    (or (respond-file o req)
+        (respond-page o req)
+        ;TODO: 404
+        )))
 
 (def file-exists-in-pubdir (file)
   (awhen string.file
     (file-exists (+ conf*!pubdir "/" it))))
-
-(deftem response
-  hds  (obj Server       (+ "epona/" epona-ver*)
-            Content-Type mimetypes!html
-            Connection   "close")
-  code 200)
 
 (def respond-header (res)
   (prrn "HTTP/1.0 " res!code " " (status-codes* res!code))
@@ -111,12 +110,14 @@
               (writeb b o)))))
       res)))
 
-; FIXME: this is dummy code!
-(def dispatch (req)
-  (let res (table)
+(def respond-page (o req)
+  (let res (inst 'response)
+    ; FIXME: this is dummy code!
     (= res!bdy (tostring (prn "<html><body><pre>" req "</pre></body></html>")))
-    res
-    ))
+    (w/stdout o
+      (respond-header res)
+      (prrn res!bdy))
+    res))
 
 (def readreq (i ip)
   (withs ((meth path prtcl) (tokens:readline i)
