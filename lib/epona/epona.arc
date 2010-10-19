@@ -26,18 +26,19 @@
             Connection   "close")
   code 200)
 
-(= status-codes* (listtab '(
-  (200 "OK")
-  (302 "Moved Temporarily")
-  (404 "Not Found")
-  (500 "Internal Server Error"))))
-
 (def load-mimetypes (path)
   (let tb (load-table path)
     (def mimetypes (f)
       (or (tb (sym:downcase:last:tokens string.f #\.))
       ;(or (tb (sym:downcase (last (check (tokens f #\.) ~single))))
           (tb 'txt)))))
+
+(def load-status-codes (path)
+  (let tb (load-table path)
+    (def http-status (code)
+      (aif tb.code
+           (string "HTTP/1.0 " code " " it)
+           (string "HTTP/1.0 " code " Unknown Status Code")))))
 
 (def load-conf (path)
   (= conf* (load-table (+ appdir* "/app.conf")))
@@ -50,8 +51,9 @@
   (map ensure-dir (list conf*!logdir conf*!tmpdir)))
 
 (def init-epona ()
-  (load-mimetypes (+ sysdir* "/etc/mime.types"))
-  (load-conf (+ appdir* "/app.conf"))
+  (load-mimetypes    (+ sysdir* "/etc/mime.types"))
+  (load-status-codes (+ sysdir* "/etc/http-status"))
+  (load-conf         (+ appdir* "/app.conf"))
   (ensure-srvdirs))
 
 (def serve ((o port 8080))
@@ -93,7 +95,7 @@
     (file-exists (+ conf*!pubdir "/" it))))
 
 (def respond-header (res)
-  (prrn "HTTP/1.0 " res!code " " (status-codes* res!code))
+  (prrn (http-status res!code))
   (each (k v) res!hds (prrn k ": " v))
   (prrn))
 
