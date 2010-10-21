@@ -84,12 +84,12 @@
                (break-thread th1)
                (force-close i o))))))
 
+; XXX
 (def handle-request-thread (i o ip)
   (let req (readreq i ip)
     (or (respond-file o req)
         (respond-page o req)
-        ;TODO: 404
-        )))
+        (respond-err o 404))))
 
 (def file-exists-in-pubdir (file)
   (awhen string.file
@@ -116,14 +116,8 @@
 ; XXX
 (def respond-page (o req)
   (awhen (find-op req!op)
-    (let res (inst 'response)
-      ; FIXME: this is dummy code!
-      ;(= res!bdy (tostring (prn "<html><body><pre>" req "</pre></body></html>")))
-      (= res!bdy (it o req))
-;      (w/stdout o
-;        (respond-header res)
-;        (prrn res!bdy))
-      res)))
+    (it o req)
+    'respond))
 
 (def readreq (i ip)
   (withs ((meth path prtcl) (tokens:readline i)
@@ -184,10 +178,10 @@
 |#
 
 (mac redirect args
-  `(REDIRECT '(,@args)))
+  `(_redirect '(,@args)))
 
 (mac httperr args
-  `(HTTPERR '(,@args)))
+  `(_httperr '(,@args)))
 
 (def respond (bdy)
   (let res (inst 'response 'bdy bdy)
@@ -199,10 +193,11 @@
   (prrn "Location: " to)
   (prrn))
 
-(def respond-err ((o code 404) (o msg ""))
+(def respond-err (o (o code 404) (o msg ""))
+  (w/stdout o
   (prrn (http-status code))
   (prrn)
-  (prn code msg))
+  (prn code msg)))
 
 (mac defop (name parm . body)
   (w/uniq (go gs gr ge)
@@ -212,13 +207,13 @@
         (fn (,go ,parm)
           (withs (,gs nil
                   ,gr nil
-                  ,ge (point HTTPERR
-                        (= ,gr (point REDIRECT
+                  ,ge (point _httperr
+                        (= ,gr (point _redirect
                                  (= ,gs (tostring ,@body))))))
             (w/stdout ,go
               (if ,gs (respond ,gs)
                   ,gr (apply respond-redirect ,gr)
-                  ,ge (apply respond-err ,ge))))))))
+                  ,ge (apply respond-err ,go ,ge))))))))
 
 (def find-op (op)
   (aif epona-ops*.op
