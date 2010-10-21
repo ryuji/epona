@@ -112,14 +112,17 @@
               (writeb b o)))))
       res)))
 
+; XXX
 (def respond-page (o req)
-  (let res (inst 'response)
-    ; FIXME: this is dummy code!
-    (= res!bdy (tostring (prn "<html><body><pre>" req "</pre></body></html>")))
-    (w/stdout o
-      (respond-header res)
-      (prrn res!bdy))
-    res))
+  (awhen (find-op req!op)
+    (let res (inst 'response)
+      ; FIXME: this is dummy code!
+      ;(= res!bdy (tostring (prn "<html><body><pre>" req "</pre></body></html>")))
+      (= res!bdy (it o req))
+;      (w/stdout o
+;        (respond-header res)
+;        (prrn res!bdy))
+      res)))
 
 (def readreq (i ip)
   (withs ((meth path prtcl) (tokens:readline i)
@@ -158,3 +161,57 @@
 (def parsebdy (hds bdy)
   (when (findsubseq "x-www-form-urlencoded" (alref hds "Content-Type"))
     (parseargs bdy)))
+
+; ----------------------------------------------------------------------------
+
+(= epona-ops* (table) epona-opidxs* (list))
+
+#|
+(mac defop-raw (name parms . body)
+  (w/uniq t1
+    `(= (srvops* ',name) 
+        (fn ,parms 
+          (let ,t1 (msec)
+            (do1 (do ,@body)
+                 (save-optime ',name (- (msec) ,t1))))))))
+
+(mac defop (name parm . body)
+  (w/uniq gs
+    `(do (wipe (redirector* ',name))
+         (defop-raw ,name (,gs ,parm) 
+           (w/stdout ,gs (prn) ,@body)))))
+|#
+
+(mac redirect args
+  `(REDIRECT '(,@args)))
+
+(mac httperr args
+  `(HTTPERR '(,@args)))
+
+(def respond-redirect (to (o code 302))
+  (prrn (http-status code))
+  (prrn "Location: " to)
+  (prrn))
+
+(mac defop (name parm . body)
+  (w/uniq (go gs gr ge)
+    (when (is (type name) 'string)
+    (push name epona-opidxs*))
+;  `(= (epona-ops* ',name) (fn ,parm ,@body)))
+  `(= (epona-ops* ',name)
+      (fn (,go ,parm)
+        (withs (,gs nil
+                ,gr nil
+                ,ge (point httperr
+                      (= ,gr (point REDIRECT
+                               (= ,gs (tostring ,@body))))))
+          (w/stdout ,go
+            (if ,gs ,gs
+                ,gr (apply respond-redirect ,gr)
+                ,ge (respond-err ,ge))))))))
+
+(def find-op (op)
+  (aif epona-ops*.op
+       it
+       (retrieve 1 [re-match (string #\^ _ #\$) string.op] epona-opidxs*)
+       (epona-ops* it.0)))
