@@ -24,7 +24,8 @@
   hds  (obj Server       (+ "epona/" epona-ver*)
             Content-Type mimetypes!html
             Connection   "close")
-  code 200)
+  code 200
+  bdy  nil)
 
 (def load-mimetypes (path)
   (let tb (load-table path)
@@ -188,27 +189,36 @@
 (mac httperr args
   `(HTTPERR '(,@args)))
 
+(def respond (bdy)
+  (let res (inst 'response 'bdy bdy)
+     (respond-header res)
+     (prrn res!bdy)))
+
 (def respond-redirect (to (o code 302))
   (prrn (http-status code))
   (prrn "Location: " to)
   (prrn))
 
+(def respond-err ((o code 404) (o msg ""))
+  (prrn (http-status code))
+  (prrn)
+  (prn code msg))
+
 (mac defop (name parm . body)
   (w/uniq (go gs gr ge)
     (when (is (type name) 'string)
-    (push name epona-opidxs*))
-;  `(= (epona-ops* ',name) (fn ,parm ,@body)))
-  `(= (epona-ops* ',name)
-      (fn (,go ,parm)
-        (withs (,gs nil
-                ,gr nil
-                ,ge (point httperr
-                      (= ,gr (point REDIRECT
-                               (= ,gs (tostring ,@body))))))
-          (w/stdout ,go
-            (if ,gs ,gs
-                ,gr (apply respond-redirect ,gr)
-                ,ge (respond-err ,ge))))))))
+      (push name epona-opidxs*))
+    `(= (epona-ops* ',name)
+        (fn (,go ,parm)
+          (withs (,gs nil
+                  ,gr nil
+                  ,ge (point HTTPERR
+                        (= ,gr (point REDIRECT
+                                 (= ,gs (tostring ,@body))))))
+            (w/stdout ,go
+              (if ,gs (respond ,gs)
+                  ,gr (apply respond-redirect ,gr)
+                  ,ge (apply respond-err ,ge))))))))
 
 (def find-op (op)
   (aif epona-ops*.op
