@@ -84,21 +84,17 @@
                (break-thread th1)
                (force-close i o))))))
 
-; XXX
 (def handle-request-thread (i o ip)
   (let req (readreq i ip)
     (or (respond-file o req)
         (respond-page o req)
         (respond-err o 404))))
 
+; ----------------------------------------------------------------------------
+
 (def file-exists-in-pubdir (file)
   (awhen string.file
     (file-exists (+ conf*!pubdir "/" it))))
-
-(def respond-header (res)
-  (prrn (http-status res!code))
-  (each (k v) res!hds (prrn k ": " v))
-  (prrn))
 
 (def respond-file (o req)
   (awhen (file-exists-in-pubdir req!op)
@@ -111,13 +107,36 @@
           (w/infile i it
             (whilet b (readb i)
               (writeb b o)))))
-      res)))
+      'respond)))
 
-; XXX
 (def respond-page (o req)
   (awhen (find-op req!op)
     (it o req)
     'respond))
+
+(def respond-header (res)
+  (prrn (http-status res!code))
+  (each (k v) res!hds (prrn k ": " v))
+  (prrn))
+
+(def respond (o res)
+  (w/stdout o
+    (respond-header res)
+    (when res!bdy
+      (prrn res!bdy))))
+
+(def respond-redirect (o to (o code 302))
+  (let res (inst 'response 'code code)
+    (= res!hds!Location to)
+    (respond o res)))
+
+(def respond-err (o (o code 404) (o msg ""))
+    ; TODO: response error page
+    (respond o (inst 'response
+                     'code code
+                     'bdy (string code msg))))
+
+; ----------------------------------------------------------------------------
 
 (def readreq (i ip)
   (withs ((meth path prtcl) (tokens:readline i)
@@ -161,43 +180,11 @@
 
 (= epona-ops* (table) epona-opidxs* (list))
 
-#|
-(mac defop-raw (name parms . body)
-  (w/uniq t1
-    `(= (srvops* ',name) 
-        (fn ,parms 
-          (let ,t1 (msec)
-            (do1 (do ,@body)
-                 (save-optime ',name (- (msec) ,t1))))))))
-
-(mac defop (name parm . body)
-  (w/uniq gs
-    `(do (wipe (redirector* ',name))
-         (defop-raw ,name (,gs ,parm) 
-           (w/stdout ,gs (prn) ,@body)))))
-|#
-
 (mac redirect args
   `(_redirect '(,@args)))
 
 (mac httperr args
   `(_httperr '(,@args)))
-
-(def respond (bdy)
-  (let res (inst 'response 'bdy bdy)
-     (respond-header res)
-     (prrn res!bdy)))
-
-(def respond-redirect (to (o code 302))
-  (prrn (http-status code))
-  (prrn "Location: " to)
-  (prrn))
-
-(def respond-err (o (o code 404) (o msg ""))
-  (w/stdout o
-  (prrn (http-status code))
-  (prrn)
-  (prn code msg)))
 
 (mac defop (name parm . body)
   (w/uniq (go gs gr ge)
@@ -210,13 +197,12 @@
                   ,ge (point _httperr
                         (= ,gr (point _redirect
                                  (= ,gs (tostring ,@body))))))
-            (w/stdout ,go
-              (if ,gs (respond ,gs)
-                  ,gr (apply respond-redirect ,gr)
-                  ,ge (apply respond-err ,go ,ge))))))))
+            (if ,gs (respond ,go (inst 'response 'bdy ,gs))
+                ,gr (apply respond-redirect ,go ,gr)
+                ,ge (apply respond-err ,go ,ge)))))))
 
 (def find-op (op)
   (aif epona-ops*.op
        it
-       (retrieve 1 [re-match (string #\^ _ #\$) string.op] epona-opidxs*)
+       (retrieve 1 [re-match (string "^" _ "/$") string.op] epona-opidxs*)
        (epona-ops* it.0)))
