@@ -1,6 +1,7 @@
 ; epona.arc
 
 (load "util.arc")
+(load "tag.arc")
 
 (= epona-ver*  "1.0a")
 
