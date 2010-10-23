@@ -187,20 +187,21 @@
 (mac httperr args
   `(_httperr '(,@args)))
 
-(mac defop (name parm . body)
+(mac defop (parm . body)
   (w/uniq (go gs gr ge)
-    (when (is (type name) 'string)
-      (push name epona-opidxs*))
-    `(= (epona-ops* ',name)
-        (fn (,go ,parm)
-          (withs (,gs nil
-                  ,gr nil
-                  ,ge (point _httperr
-                        (= ,gr (point _redirect
-                                 (= ,gs (tostring ,@body))))))
-            (if ,gs (respond ,go (inst 'response 'bdy ,gs))
-                ,gr (apply respond-redirect ,go ,gr)
-                ,ge (apply respond-err ,go ,ge)))))))
+    (let name (if atom.parm parm pop.parm)
+      (when (is (type name) 'string)
+        (push name epona-opidxs*))
+      `(= (epona-ops* ',name)
+          (fn (,go req)
+            (withs (,gs nil
+                    ,gr nil
+                    ,ge (point _httperr
+                          (= ,gr (point _redirect
+                                   (= ,gs (tostring ,@body))))))
+              (if ,gs (respond ,go (inst 'response 'bdy ,gs))
+                  ,gr (apply respond-redirect ,go ,gr)
+                  ,ge (apply respond-err ,go ,ge))))))))
 
 (def find-op (op)
   (aif epona-ops*.op
