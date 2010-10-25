@@ -1,7 +1,8 @@
 ; epona.arc
 
 (load "util.arc")
-(load "tag.arc")
+(load "page.arc")
+;(load "mongo.arc")
 
 (= epona-ver*  "1.0a")
 

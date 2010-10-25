@@ -3,7 +3,8 @@
     `(do ,(enclose-tag spec)
          ,(tag-body body)
          ,(enclose-tag (aif carif.spec it spec) "</"))
-    `,(enclose-tag spec "<" " />")))
+    `,(enclose-tag spec "<" ">")))
+    ;`,(enclose-tag spec "<" " />")))
 
 (def enclose-tag (spec (o start "<") (o end ">"))
   (if atom.spec
