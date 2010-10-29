@@ -50,12 +50,6 @@
                           'tmpdir (+ appdir* "/tmp")
                           'logdir (+ appdir* "/log"))))
 
-(def refresh-static-file-version ()
-  (= static-file-version* (+ ".v" (seconds) ".")))
-
-(def static-file (file)
-  (re-replace "\\.(.*)$" file (+ static-file-version* "\\1")))
-
 (def ensure-srvdirs ()
   (map ensure-dir (list conf*!logdir conf*!tmpdir)))
 
@@ -63,7 +57,6 @@
   (load-mimetypes    (+ sysdir* "/etc/mime.types"))
   (load-status-codes (+ sysdir* "/etc/http-status"))
   (load-conf         (+ appdir* "/app.conf"))
-  (refresh-static-file-version)
   (ensure-srvdirs))
 
 (def serve ((o port 8080))

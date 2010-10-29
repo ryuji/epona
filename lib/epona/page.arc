@@ -1,9 +1,16 @@
 (load "tag.arc")
 
-(def html5shim ()
-  (pr "<!--[if lt IE 9]>")
-  (tag (script src "http://html5shim.googlecode.com/svn/trunk/html5.js") "")
-  (pr "<![endif]-->"))
+(= assets-ver* (+ ".v" (seconds) "."))
+
+(def assets-ver (file)
+  (if (re-match-pat "^https?://" file)
+      file
+      (re-replace "\\.([^.]*)$" file (+ assets-ver* "\\1"))))
+
+(mac html5shim ()
+  `(do (pr "<!--[if lt IE 9]>")
+       (script (src "http://html5shim.googlecode.com/svn/trunk/html5.js"))
+       (pr "<![endif]-->")))
 
 (mac page (head . body)
   (= head (listtab:pair head))
@@ -15,3 +22,8 @@
            (html5shim))
          ; TODO: css js meta link
          (tag body ,@body))))
+
+(mac script (opts (o body ""))
+  (awhen (pos 'src opts)
+    (= (opts:++ it) (assets-ver opts.it)))
+  `(tag (script ,@opts) ,body))
