@@ -27,3 +27,10 @@
   (awhen (pos 'src opts)
     (= (opts:++ it) (assets-ver opts.it)))
   `(tag (script ,@opts) ,body))
+
+(mac img (src (o alt "") (o opts))
+  (unless (headmatch "/" src)
+          (= src (+ "/images/" src)))
+  `(tag (img src ,(assets-ver src) alt ,alt ,@opts)))
+
+
