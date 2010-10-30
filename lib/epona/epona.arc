@@ -145,7 +145,7 @@
   (withs ((meth path prtcl) (tokens:readline i)
           (base qs)         (tokens path #\?)
            hds              (readhds i)
-           bdy             (readbdy hds i))
+           bdy              (readbdy hds i))
     (inst 'request 'meth  (sym:downcase meth)
                    'path  path
                    'prtcl prtcl
