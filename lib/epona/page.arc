@@ -36,4 +36,4 @@
           (= src (+ "/images/" src)))
   `(tag (img src ,(assets-ver src) alt ,alt ,@opts)))
 
-
+(deftags '(header footer))

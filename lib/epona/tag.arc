@@ -1,10 +1,18 @@
+; TODO: まとめる
 (mac tag (spec . body)
   (if body
     `(do ,(enclose-tag spec)
          ,(tag-body body)
          ,(enclose-tag (aif carif.spec it spec) "</"))
-    `,(enclose-tag spec "<" ">")))
-    ;`,(enclose-tag spec "<" " />")))
+    `,(enclose-tag spec)))
+
+; TODO: まとめる
+(mac tagx (spec . body)
+  (if body
+    `(do ,(enclose-tag spec)
+         ,(tag-body body)
+         ,(enclose-tag (aif carif.spec it spec) "</"))
+    `,(enclose-tag spec "<" " />")))
 
 (def enclose-tag (spec (o start "<") (o end ">"))
   (if atom.spec
@@ -30,3 +38,18 @@
   `(aif ,val (pr " " ',key "=\"" it #\")))
 
 ; TODO: escape
+
+; XXX: 使い方間違ってるかも?
+(mac gentag (spec (o type 'xml))
+  (w/uniq (gs ga go gb)
+    (let gs string.spec
+      `(mac ,spec ,ga
+         (withs (,go (and (acons:car ,ga)
+                          (is (caar ,ga) '@)
+                          (cdr:car ,ga))
+                 ,gb (if ,go (cdr ,ga) ,ga))
+               `(tag (,,gs ,@,go) ,@,gb))))))
+
+; XXX: 使い方間違ってるかも?
+(def deftags (tags)
+  (map [eval `(gentag ,_)] tags))
