@@ -96,7 +96,7 @@
 
 (def file-exists-in-pubdir (file)
   (awhen (re-replace "\\.v\\d*\\." string.file ".")
-    (or (file-exists (+ conf*!pubdir "/" it))
+    (or (file-exists (+ appdir* "/pub/" it))
         (file-exists (+ sysdir* "/share/pub/" it)))))
 
 (def respond-file (o req)

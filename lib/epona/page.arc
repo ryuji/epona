@@ -1,11 +1,13 @@
 (load "tag.arc")
 
-(= assets-ver* (+ ".v" (seconds) "."))
+;(= assets-ver* (+ ".v" (seconds) "."))
 
 (def assets-ver (file)
-  (if (re-match-pat "^https?://" file)
-      file
-      (re-replace "\\.([^.]*)$" file (+ assets-ver* "\\1"))))
+  (aif (re-match-pat "^https?://" file)
+       file
+       (file-exists-in-pubdir file)
+       (re-replace "\\.([^.]*)$" file (+ ".v" (mtime it) ".\\1"))
+       (warn "Not exist file" file)))
 
 (mac html5shim ()
   `(do (pr "<!--[if lt IE 9]>")
@@ -28,6 +30,7 @@
     (= (opts:++ it) (assets-ver opts.it)))
   `(tag (script ,@opts) ,body))
 
+; TODO: auto set width & height
 (mac img (src (o alt "") (o opts))
   (unless (headmatch "/" src)
           (= src (+ "/images/" src)))
