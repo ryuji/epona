@@ -1,11 +1,11 @@
 (= markup-lang* 'html)
 
 (mac xml args
-  `(let markup-lang* 'xml
+  `(atlet markup-lang* 'xml
      ,@args))
 
 (mac xhtml args
-  `(let markup-lang* 'xhtml
+  `(atlet markup-lang* 'xhtml
      ,@args))
 
 (mac tag (spec . body)
