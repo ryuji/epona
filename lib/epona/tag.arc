@@ -1,18 +1,23 @@
-; TODO: まとめる
+(= markup-lang* 'html)
+
+(mac xml args
+  `(let markup-lang* 'xml
+     ,@args))
+
+(mac xhtml args
+  `(let markup-lang* 'xhtml
+     ,@args))
+
 (mac tag (spec . body)
   (if body
     `(do ,(enclose-tag spec)
          ,(tag-body body)
          ,(enclose-tag (aif carif.spec it spec) "</"))
-    `,(enclose-tag spec)))
-
-; TODO: まとめる
-(mac tagx (spec . body)
-  (if body
-    `(do ,(enclose-tag spec)
-         ,(tag-body body)
-         ,(enclose-tag (aif carif.spec it spec) "</"))
-    `,(enclose-tag spec "<" " />")))
+    `(case markup-lang*
+       html  ,(enclose-tag spec)
+       xhtml ,(enclose-tag spec "<" " />")
+       xml   ,(enclose-tag spec "<" "/>")
+              (err "Unsupported markup language " markup-lang*))))
 
 (def enclose-tag (spec (o start "<") (o end ">"))
   (if atom.spec
@@ -39,16 +44,25 @@
 
 ; TODO: escape
 
+
+(def tag-parse args
+  (withs (opts (and (acons:car args)
+                          (is (caar args) '@)
+                          (cdr:car args))
+          body (if opts (cdr args) args))
+    (list opts body)))
+
 ; XXX: 使い方間違ってるかも?
 (mac gentag (spec (o type 'xml))
   (w/uniq (gs ga go gb)
     (let gs string.spec
-      `(mac ,spec ,ga
+      `(mac ,(sym (+ #\< spec)) ,ga
          (withs (,go (and (acons:car ,ga)
                           (is (caar ,ga) '@)
                           (cdr:car ,ga))
                  ,gb (if ,go (cdr ,ga) ,ga))
                `(tag (,,gs ,@,go) ,@,gb))))))
+
 
 ; XXX: 使い方間違ってるかも?
 (def deftags (tags)
