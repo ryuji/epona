@@ -151,7 +151,7 @@
                    'prtcl prtcl
                    'hds   hds
                    'bdy   bdy
-                   'op    (sym:cut base 1)
+                   'op    (sym:re-replace "^/?([^/]*)/?$" base "\\1")
                    'qs    qs
                    'args  (join (only.parseargs qs) (only.parsebdy hds bdy))
                    'cooks (only.parsecooks (alref hds "Cookie"))
