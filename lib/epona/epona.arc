@@ -113,7 +113,7 @@
       'respond)))
 
 (def respond-page (o req)
-  (awhen (find-op req!op)
+  (awhen (find-op req)
     (it o req)
     'respond))
 
@@ -181,7 +181,8 @@
 
 ; ----------------------------------------------------------------------------
 
-(= epona-ops* (table) epona-opidxs* (list))
+(= route-map* (obj get (table) post (table) put (table) delete (table))
+   route-idx* (obj get nil     post nil     put nil     delete nil))
 
 (mac redirect args
   `(_redirect '(,@args)))
@@ -189,12 +190,12 @@
 (mac httperr args
   `(_httperr '(,@args)))
 
-(mac defop (parm . body)
+(mac defop (args . body)
   (w/uniq (go gs gr ge)
-    (let name (if atom.parm parm pop.parm)
-      (when (is (type name) 'string)
-        (push name epona-opidxs*))
-      `(= (epona-ops* ',name)
+    (let (meth name params) args
+      (if (is (type name) 'string)
+          (push name route-idx*.meth))
+      `(= ((route-map* ',meth) ',name)
           (fn (,go req)
             (withs (,gs nil
                     ,gr nil
@@ -205,8 +206,20 @@
                   ,gr (apply respond-redirect ,go ,gr)
                   ,ge (apply respond-err ,go ,ge))))))))
 
-(def find-op (op)
-  (aif epona-ops*.op
-       it
-       (retrieve 1 [re-match (string "^" _ "/$") string.op] epona-opidxs*)
-       (epona-ops* it.0)))
+(mac genroute (name)
+  (w/uniq (ga gb)
+    `(mac ,upcase.name (ga . gb)
+      (let ga (cons ',downcase.name (flat ga))
+        `(defop ,ga ,@gb)))))
+
+(map [eval `(genroute ,_)]
+     '(get post put delete))
+
+(def find-op (req)
+  (with (op   req!op
+         meth (check req!meth [isnt 'head _] 'get))
+    (aif route-map*.meth.op
+         it
+         (retrieve 1 [re-match (string "^" _ "$") string.op] route-idx*.meth)
+         (route-map*.meth it.0))))
+
